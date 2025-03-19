@@ -1,0 +1,410 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transaction Receipt Application</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f5f5f5;
+        }
+        
+        .clay-effect {
+            background: #f0f0f0;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 
+                8px 8px 16px rgba(0, 0, 0, 0.1),
+                -8px -8px 16px rgba(255, 255, 255, 0.8),
+                inset 2px 2px 4px rgba(255, 255, 255, 0.8),
+                inset -2px -2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .clay-button {
+            transition: all 0.3s ease;
+            background: #f0f0f0;
+            border-radius: 12px;
+            box-shadow: 
+                5px 5px 10px rgba(0, 0, 0, 0.1),
+                -5px -5px 10px rgba(255, 255, 255, 0.8);
+        }
+
+        .clay-button:hover {
+            transform: translateY(2px);
+            box-shadow: 
+                4px 4px 8px rgba(0, 0, 0, 0.1),
+                -4px -4px 8px rgba(255, 255, 255, 0.8),
+                inset 1px 1px 2px rgba(255, 255, 255, 0.8),
+                inset -1px -1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .clay-input {
+            background: #f0f0f0;
+            border-radius: 12px;
+            box-shadow: 
+                inset 2px 2px 4px rgba(0, 0, 0, 0.1),
+                inset -2px -2px 4px rgba(255, 255, 255, 0.8);
+            border: none;
+            padding: 12px 16px;
+        }
+
+        .clay-input:focus {
+            outline: none;
+            box-shadow: 
+                inset 3px 3px 6px rgba(0, 0, 0, 0.1),
+                inset -3px -3px 6px rgba(255, 255, 255, 0.8);
+        }
+
+        .clay-card {
+            background: #f8f8f8;
+            border-radius: 16px;
+            box-shadow: 
+                6px 6px 12px rgba(0, 0, 0, 0.1),
+                -6px -6px 12px rgba(255, 255, 255, 0.8);
+            transition: all 0.3s ease;
+        }
+
+        .clay-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 
+                8px 8px 16px rgba(0, 0, 0, 0.1),
+                -8px -8px 16px rgba(255, 255, 255, 0.8);
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+            100% { transform: translateY(0px); }
+        }
+
+        .floating {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .receipt-paper {
+            background-color: white;
+            background-image: 
+                linear-gradient(90deg, rgba(200,200,200,.1) 1px, transparent 1px),
+                linear-gradient(rgba(200,200,200,.1) 1px, transparent 1px);
+            background-size: 20px 20px;
+            position: relative;
+        }
+
+        .receipt-paper::after {
+            content: "";
+            position: absolute;
+            bottom: -10px;
+            left: 0;
+            width: 100%;
+            height: 10px;
+            background: 
+                linear-gradient(45deg, white 25%, transparent 25%),
+                linear-gradient(-45deg, white 25%, transparent 25%);
+            background-size: 20px 20px;
+        }
+
+        /* Animation for success message */
+        @keyframes fadeInOut {
+            0% { opacity: 0; }
+            15% { opacity: 1; }
+            85% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        .fade-in-out {
+            animation: fadeInOut 3s forwards;
+        }
+
+        /* Print-specific styles */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            .receipt-to-print, .receipt-to-print * {
+                visibility: visible;
+            }
+            .receipt-to-print {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-6">
+    <div class="container mx-auto max-w-6xl">
+        <header class="mb-8">
+            <div class="clay-effect p-4 flex flex-col sm:flex-row justify-between items-center">
+                <h1 class="text-2xl md:text-3xl font-bold text-gray-800 mb-2 sm:mb-0">
+                    <i class="bi bi-receipt text-blue-500 mr-2"></i>Transaction Receipt System
+                </h1>
+                <div class="flex items-center space-x-4">
+                    <button id="new-transaction-btn" class="clay-button px-4 py-2 text-blue-600 font-medium">
+                        <i class="bi bi-plus-circle mr-1"></i> New Transaction
+                    </button>
+                    <button id="view-history-btn" class="clay-button px-4 py-2 text-green-600 font-medium">
+                        <i class="bi bi-clock-history mr-1"></i> History
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <main class="flex flex-col lg:flex-row gap-6">
+            <!-- Transaction Form Section -->
+            <section id="transaction-form-section" class="clay-effect p-6 lg:w-1/2">
+                <h2 class="text-xl font-semibold mb-4 text-gray-700">Create New Transaction</h2>
+                
+                <form id="transaction-form" class="space-y-4">
+                    <div class="space-y-2">
+                        <label class="block text-gray-600 font-medium">Customer Name</label>
+                        <input type="text" id="customer-name" class="clay-input w-full" placeholder="Enter customer name" required>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <label class="block text-gray-600 font-medium">Transaction Date</label>
+                        <input type="date" id="transaction-date" class="clay-input w-full" required>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <label class="block text-gray-600 font-medium">Transaction Type</label>
+                        <select id="transaction-type" class="clay-input w-full" required>
+                            <option value="">Select type</option>
+                            <option value="purchase">Purchase</option>
+                            <option value="refund">Refund</option>
+                            <option value="subscription">Subscription</option>
+                            <option value="service">Service</option>
+                        </select>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <label class="block text-gray-600 font-medium">Items</label>
+                        <div id="items-container" class="space-y-3">
+                            <div class="item-row flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+                                <input type="text" class="item-name clay-input sm:w-1/2" placeholder="Item name" required>
+                                <input type="number" class="item-price clay-input sm:w-1/4" placeholder="Price" min="0" step="0.01" required>
+                                <input type="number" class="item-quantity clay-input sm:w-1/6" placeholder="Qty" min="1" value="1" required>
+                                <button type="button" class="remove-item clay-button text-red-500 px-3 py-2 sm:w-1/12 flex justify-center">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <button type="button" id="add-item" class="clay-button mt-2 text-blue-600 px-4 py-2 text-sm">
+                            <i class="bi bi-plus-circle mr-1"></i> Add Item
+                        </button>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <label class="block text-gray-600 font-medium">Payment Method</label>
+                        <select id="payment-method" class="clay-input w-full" required>
+                            <option value="">Select payment method</option>
+                            <option value="cash">Cash</option>
+                            <option value="credit_card">Credit Card</option>
+                            <option value="debit_card">Debit Card</option>
+                            <option value="bank_transfer">Bank Transfer</option>
+                            <option value="mobile_payment">Mobile Payment</option>
+                        </select>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <label class="block text-gray-600 font-medium">Notes (Optional)</label>
+                        <textarea id="transaction-notes" class="clay-input w-full" rows="3" placeholder="Additional notes"></textarea>
+                    </div>
+                    
+                    <div class="pt-4">
+                        <button type="submit" id="generate-receipt" class="clay-button w-full py-3 font-semibold text-white bg-blue-500 hover:bg-blue-600">
+                            <i class="bi bi-file-earmark-text mr-2"></i> Generate Receipt
+                        </button>
+                    </div>
+                </form>
+            </section>
+            
+            <!-- Receipt Preview Section -->
+            <section id="receipt-preview-section" class="clay-effect p-6 lg:w-1/2 hidden">
+                <h2 class="text-xl font-semibold mb-4 text-gray-700">Receipt Preview</h2>
+                
+                <div class="receipt-to-print receipt-paper bg-white p-6 rounded-t-lg shadow">
+                    <div class="text-center mb-6">
+                        <h3 class="text-xl font-bold">RECEIPT</h3>
+                        <p id="receipt-id" class="text-sm text-gray-500">Receipt #: TXN-12345</p>
+                        <p id="receipt-date" class="text-sm text-gray-500">Date: 2023-06-12</p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <p><strong>Customer:</strong> <span id="receipt-customer">John Doe</span></p>
+                        <p><strong>Transaction Type:</strong> <span id="receipt-type">Purchase</span></p>
+                        <p><strong>Payment Method:</strong> <span id="receipt-payment">Credit Card</span></p>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <table class="w-full text-sm">
+                            <thead class="border-b-2 border-gray-200">
+                                <tr>
+                                    <th class="text-left py-2">Item</th>
+                                    <th class="text-right py-2">Qty</th>
+                                    <th class="text-right py-2">Price</th>
+                                    <th class="text-right py-2">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody id="receipt-items">
+                                <!-- Items will be inserted here by JavaScript -->
+                            </tbody>
+                            <tfoot class="border-t-2 border-gray-200 font-semibold">
+                                <tr>
+                                    <td class="py-2" colspan="3">Subtotal</td>
+                                    <td id="receipt-subtotal" class="text-right py-2">$0.00</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2" colspan="3">Tax (10%)</td>
+                                    <td id="receipt-tax" class="text-right py-2">$0.00</td>
+                                </tr>
+                                <tr class="text-lg">
+                                    <td class="py-2" colspan="3">Total</td>
+                                    <td id="receipt-total" class="text-right py-2">$0.00</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    
+                    <div class="text-sm text-gray-600">
+                        <p id="receipt-notes" class="mb-2"><strong>Notes:</strong> Thank you for your business!</p>
+                        <p class="text-center mt-4">Thank you for your purchase!</p>
+                    </div>
+                </div>
+                
+                <div class="mt-6 flex flex-wrap justify-center space-x-0 space-y-3 sm:space-y-0 sm:space-x-3 no-print">
+                    <button id="print-receipt" class="clay-button w-full sm:w-auto px-6 py-3 font-medium text-white bg-green-500 hover:bg-green-600">
+                        <i class="bi bi-printer mr-2"></i> Print Receipt
+                    </button>
+                    <button id="email-receipt" class="clay-button w-full sm:w-auto px-6 py-3 font-medium text-white bg-purple-500 hover:bg-purple-600">
+                        <i class="bi bi-envelope mr-2"></i> Email Receipt
+                    </button>
+                    <button id="save-receipt" class="clay-button w-full sm:w-auto px-6 py-3 font-medium text-white bg-blue-500 hover:bg-blue-600">
+                        <i class="bi bi-save mr-2"></i> Save Receipt
+                    </button>
+                    <button id="new-transaction" class="clay-button w-full sm:w-auto px-6 py-3 font-medium bg-gray-200 hover:bg-gray-300">
+                        <i class="bi bi-plus-circle mr-2"></i> New Transaction
+                    </button>
+                </div>
+            </section>
+
+            <!-- Transaction History Section -->
+            <section id="transaction-history-section" class="clay-effect p-6 lg:w-full hidden">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold text-gray-700">Transaction History</h2>
+                    <button id="close-history" class="clay-button px-3 py-1 text-gray-600">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+                
+                <div class="mb-4 flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+                    <input type="text" id="search-transactions" class="clay-input sm:flex-grow" placeholder="Search by customer, ID or type...">
+                    <select id="filter-transactions" class="clay-input sm:w-1/4">
+                        <option value="">All Types</option>
+                        <option value="purchase">Purchase</option>
+                        <option value="refund">Refund</option>
+                        <option value="subscription">Subscription</option>
+                        <option value="service">Service</option>
+                    </select>
+                    <button id="search-button" class="clay-button px-4 py-2 text-blue-600">
+                        <i class="bi bi-search mr-1"></i> Search
+                    </button>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white rounded-lg">
+                        <thead class="bg-gray-100 text-gray-700">
+                            <tr>
+                                <th class="py-3 px-4 text-left">Receipt ID</th>
+                                <th class="py-3 px-4 text-left">Date</th>
+                                <th class="py-3 px-4 text-left">Customer</th>
+                                <th class="py-3 px-4 text-left">Type</th>
+                                <th class="py-3 px-4 text-right">Amount</th>
+                                <th class="py-3 px-4 text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transaction-history-body">
+                            <!-- Sample transaction rows, will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div id="no-transactions" class="text-center py-8 text-gray-500 hidden">
+                    <i class="bi bi-inbox text-5xl mb-2"></i>
+                    <p>No transactions found</p>
+                </div>
+                
+                <div id="pagination" class="mt-4 flex justify-center space-x-2">
+                    <!-- Pagination will be generated by JavaScript -->
+                </div>
+            </section>
+        </main>
+
+        <!-- Notification -->
+        <div id="notification" class="fixed bottom-4 right-4 bg-green-500 text-white p-4 rounded-lg shadow-lg opacity-0 transition-opacity duration-300 hidden">
+            <p id="notification-message">Operation successful!</p>
+        </div>
+
+        <!-- Email Modal -->
+        <div id="email-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+            <div class="clay-effect bg-white p-6 rounded-lg max-w-md w-full">
+                <h3 class="text-xl font-bold mb-4">Email Receipt</h3>
+                <form id="email-form" class="space-y-4">
+                    <div>
+                        <label class="block text-gray-600 mb-1">Recipient Email</label>
+                        <input type="email" id="recipient-email" class="clay-input w-full" placeholder="Enter email address" required>
+                    </div>
+                    <div>
+                        <label class="block text-gray-600 mb-1">Subject</label>
+                        <input type="text" id="email-subject" class="clay-input w-full" value="Your Transaction Receipt" required>
+                    </div>
+                    <div>
+                        <label class="block text-gray-600 mb-1">Message (Optional)</label>
+                        <textarea id="email-message" class="clay-input w-full" rows="3" placeholder="Add a personal message"></textarea>
+                    </div>
+                    <div class="flex justify-end space-x-3 pt-2">
+                        <button type="button" id="cancel-email" class="clay-button px-4 py-2 text-gray-600">Cancel</button>
+                        <button type="submit" class="clay-button px-4 py-2 bg-blue-500 text-white">Send Email</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Current date for default value
+        document.addEventListener('DOMContentLoaded', () => {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('transaction-date').value = today;
+            
+            // Initialize demo data
+            initializeTransactions();
+        });
+
+        // Toggle between sections
+        const transactionFormSection = document.getElementById('transaction-form-section');
+        const receiptPreviewSection = document.getElementById('receipt-preview-section');
+        const historySection = document.getElementById('transaction-history-section');
+        
+        // Button event listeners for navigation
+        document.getElementById('new-transaction-btn').addEventListener('click', () => {
+            showTransactionForm();
+        });
+        
+        document.getElementById('view-history-btn').addEventListener('click', () => {
+            showTransactionHistory();
+        });
+        
+        document.getElementById('close-history').addEventListener('click', () => {
+            showTransactionForm();
+        });
+        
+        document.getElementById('ne
